@@ -1,0 +1,88 @@
+#!/bin/sh
+# chkconfig: - 84 16
+# description:  Perl FastCGI Process Daemon
+# processname: perl-fcgi
+# perl daemon: /usr/bin/fastcgi-wrapper.pl
+#
+### BEGIN INIT INFO
+# Provides: perl-fcgi
+# Required-Start: $local_fs $remote_fs $network $named
+# Required-Stop: $local_fs $remote_fs $network
+# Short-Description: start and stop Perl FCGI
+# Description: Perl FastCGI Daemon
+### END INIT INFO
+
+# Standard LSB functions
+#. /lib/lsb/init-functions
+
+# Source function library.
+. /etc/init.d/functions
+
+# Check that networking is up.
+. /etc/sysconfig/network
+
+#
+RETVAL=0
+perlfcgi_user="nginx"
+prog="perl-fcgi"
+pidfile="/var/run/perl-fcgi/perl-fcgi.pid"
+lockfile="/var/lock/subsys/perl-fcgi"
+
+start () {
+    if [[ -e ${lockfile} ]];
+    then
+        pid=`get_pid`
+        echo "$prog (pid ${pid}) is already running..."
+        RETVAL=2
+    else
+        echo -n $"Starting $prog: "
+        dir=$(dirname ${pidfile})
+        [ -d $dir ] || mkdir $dir
+        daemon --pidfile ${pidfile} --user ${perlfcgi_user} "/usr/bin/fastcgi-wrapper.pl"
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && create_pidfile && touch ${lockfile}
+    fi
+}
+stop () {
+    echo -n $"Stopping $prog: "
+    killproc -p ${pidfile} ${prog}
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ] ; then
+        rm -f ${lockfile} ${pidfile}
+    fi
+}
+restart () {
+    stop
+    start
+}
+create_pidfile () {
+    ps -ef | grep "/usr/bin/fastcgi-wrapper.pl" | grep -v grep | awk '{print $2}' > ${pidfile};
+}
+get_pid () {
+    pid=`cat ${pidfile}`
+    echo ${pid}
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    restart
+    ;;
+  status)
+    status -p ${pidfile} ${prog}
+    RETVAL=$?
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart|status}"
+    RETVAL=2
+    ;;
+esac
+
+exit $RETVAL
