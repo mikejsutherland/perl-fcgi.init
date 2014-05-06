@@ -22,37 +22,37 @@
 . /etc/sysconfig/network
 
 #
-perlfcgi_user="nginx"
+user="nginx"
 prog="perl-fcgi"
 wrapper="/usr/bin/fastcgi-wrapper.pl"
 
 #
 pidfile="/var/run/${prog}/${prog}.pid"
 lockfile="/var/lock/subsys/${prog}"
-RETVAL=0
+rc=0
 
 start () {
     if [[ -e ${lockfile} ]];
     then
         pid=$(pidofproc -p ${pidfile} ${prog})
         echo "$prog (pid ${pid}) is already running..."
-        RETVAL=2
+        rc=2
     else
         echo -n $"Starting $prog: "
         dir=$(dirname ${pidfile})
         [ -d $dir ] || mkdir $dir
-        daemon --pidfile ${pidfile} --user ${perlfcgi_user} ${wrapper}
-        RETVAL=$?
+        daemon --pidfile ${pidfile} --user ${user} ${wrapper}
+        rc=$?
         echo
-        [ $RETVAL -eq 0 ] && pidofproc ${wrapper} > ${pidfile} && touch ${lockfile}
+        [ $rc -eq 0 ] && pidofproc ${wrapper} > ${pidfile} && touch ${lockfile}
     fi
 }
 stop () {
     echo -n $"Stopping $prog: "
     killproc -p ${pidfile} ${prog}
-    RETVAL=$?
+    rc=$?
     echo
-    if [ $RETVAL -eq 0 ] ; then
+    if [ $rc -eq 0 ] ; then
         rm -f ${lockfile} ${pidfile}
     fi
 }
@@ -73,12 +73,12 @@ case "$1" in
     ;;
   status)
     status -p ${pidfile} ${prog}
-    RETVAL=$?
+    rc=$?
     ;;
   *)
     echo $"Usage: $0 {start|stop|restart|status}"
-    RETVAL=2
+    rc=2
     ;;
 esac
 
-exit $RETVAL
+exit $rc
