@@ -13,4 +13,4 @@ Install as root:
 
 Manage with:
 
-    # service <start|stop|restart> perl-fcgi
+    # service <start|stop|restart|status> perl-fcgi
