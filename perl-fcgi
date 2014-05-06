@@ -31,7 +31,7 @@ lockfile="/var/lock/subsys/perl-fcgi"
 start () {
     if [[ -e ${lockfile} ]];
     then
-        pid=`get_pid`
+        pid=$(pidofproc -p ${pidfile} ${prog})
         echo "$prog (pid ${pid}) is already running..."
         RETVAL=2
     else
@@ -59,10 +59,6 @@ restart () {
 }
 create_pidfile () {
     ps -ef | grep "/usr/bin/fastcgi-wrapper.pl" | grep -v grep | awk '{print $2}' > ${pidfile};
-}
-get_pid () {
-    pid=`cat ${pidfile}`
-    echo ${pid}
 }
 
 case "$1" in
